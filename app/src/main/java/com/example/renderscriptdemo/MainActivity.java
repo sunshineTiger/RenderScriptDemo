@@ -30,7 +30,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         iv = findViewById(R.id.iv);
-
         outiv = findViewById(R.id.out);
     }
 
@@ -44,24 +43,31 @@ public class MainActivity extends AppCompatActivity {
     void test2() {
         RenderScript RS = RenderScript.create(this);
         ScriptC_render script = new ScriptC_render(RS);
+
+        Log.v("MainActivity", "======init  set_radians_rot1:");
         script.set_radians_rot(90.0f);
+
+        Log.v("MainActivity", "======init  set_radians_rot2:");
         Bitmap bitmap = getBitmap(this, R.mipmap.timg);
         Bitmap bitmappiap = getBitmap(this, R.mipmap.timg1);
-        script.set_height((float) bitmap.getHeight());
-        script.set_widht((float) bitmap.getWidth());
-        Log.v("MainActivity", "======init  bitmap:" + bitmap.getHeight() + "  " + bitmap.getWidth());
-        Log.v("MainActivity", "======init  bitmappiap:" + bitmappiap.getHeight() + "  " + bitmappiap.getWidth());
+
+        float height = (float) bitmap.getHeight();
+        float width = (float) bitmap.getWidth();
+        Bitmap out = Bitmap.createBitmap((int) width * 2, (int) height * 2, Bitmap.Config.ARGB_8888);
+        script.set_transheight(height);
+        script.set_transwidht(width);
+        script.invoke_initMatrixb();
         iv.setImageBitmap(bitmap);
         Bitmap outputBitmap = Bitmap.createBitmap(bitmappiap);
         Allocation inputAllocation = Allocation.createFromBitmap(RS, bitmap);
         Allocation mOutAllocation = Allocation.createTyped(RS, inputAllocation.getType());
         Log.v("MainActivity", "======init:" + inputAllocation.getType().getElement().getDataType());
-        Type intType = Type.createXY(RS, inputAllocation.getType().getElement(), bitmap.getHeight(), bitmap.getWidth());
+        Type intType = Type.createXY(RS, inputAllocation.getType().getElement(), bitmap.getHeight() * 2, bitmap.getWidth() * 2);
         Allocation mOutputAllocationInt = Allocation.createTyped(RS, intType,
                 Allocation.USAGE_SCRIPT);
         script.set_gIntFrame(mOutputAllocationInt);
         script.forEach_xxxinvert(inputAllocation, mOutAllocation);
-        mOutputAllocationInt.copyTo(outputBitmap);
+        mOutputAllocationInt.copyTo(out);
         outiv.setImageBitmap(outputBitmap);
     }
 
